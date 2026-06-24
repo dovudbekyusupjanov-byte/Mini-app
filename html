@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Statly Bot - Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg: #0a0e27;
+            --card: #1a1f3a;
+            --primary: #3b82f6;
+            --secondary: #6366f1;
+            --accent: #8b5cf6;
+            --text: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gradient: linear-gradient(135deg, #1e3a8a, #3b82f6, #6366f1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 16px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--gradient);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .logo {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+        
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            background: var(--card);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+        }
+        
+        .tab.active {
+            background: var(--gradient);
+            color: white;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .stat-item {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        /* Chart */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin: 16px 0;
+        }
+        
+        .chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            gap: 4px;
+        }
+        
+        .chart-bar {
+            flex: 1;
+            background: var(--gradient);
+            border-radius: 8px 8px 0 0;
+            transition: height 0.3s;
+            min-height: 4px;
+            position: relative;
+        }
+        
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+        
+        .chart-label {
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .btn-premium {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-premium {
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+            color: #000;
+        }
+        
+        .badge-free {
+            background: rgba(100, 116, 139, 0.3);
+            color: var(--text-secondary);
+        }
+        
+        /* Reactions */
+        .reactions-list {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        
+        .reaction-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+        
+        .reaction-emoji {
+            font-size: 20px;
+        }
+        
+        .reaction-count {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        /* Premium Banner */
+        .premium-banner {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin: 16px 0;
+        }
+        
+        .premium-banner h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        
+        .premium-banner .price {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+        
+        .features-list {
+            text-align: left;
+            margin: 12px 0;
+            padding: 0;
+            list-style: none;
+        }
+        
+        .features-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .features-list li::before {
+            content: '✅ ';
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card);
+            padding: 12px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header fade-in">
+        <div class="logo">📊</div>
+        <h1>Statly Bot</h1>
+        <p>Аналитика ваших групп</p>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs" id="tabs">
+        <div class="tab active" onclick="switchTab('stats')">📊 Статистика</div>
+        <div class="tab" onclick="switchTab('schedule')">📅 План</div>
+        <div class="tab" onclick="switchTab('premium')">💎 Premium</div>
+    </div>
+    
+    <!-- Stats Tab -->
+    <div id="tab-stats" class="fade-in">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Обзор</span>
+                <span class="badge badge-free" id="premium-badge">FREE</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="posts-count">--</div>
+                    <div class="stat-label">Постов</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="reactions-count">--</div>
+                    <div class="stat-label">Реакций</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="authors-count">--</div>
+                    <div class="stat-label">Авторов</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="peak-hour">--</div>
+                    <div class="stat-label">Пик (час)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Активность по часам</span>
+            </div>
+            <div class="chart-container">
+                <div class="chart" id="chart"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0 10px;">
+                <span class="chart-label">0</span>
+                <span class="chart-label">6</span>
+                <span class="chart-label">12</span>
+                <span class="chart-label">18</span>
+                <span class="chart-label">23</span>
+            </div>
+        </div>
+        
+        <div class="card" id="reactions-card" style="display: none;">
+            <div class="card-header">
+                <span class="card-title">Топ реакций</span>
+            </div>
+            <div class="reactions-list" id="reactions-list"></div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="refreshStats()">
+            🔄 Обновить статистику
+        </button>
+    </div>
+    
+    <!-- Schedule Tab -->
+    <div id="tab-schedule" class="fade-in" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Запланированные посты</span>
+            </div>
+            <div id="schedule-list">
+                <p style="color: var(--text-secondary);">Загрузка...</p>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="schedulePost()">
+            ➕ Новый пост
+        </button>
+    </div>
+    
+    <!-- Premium Tab -->
+    <div id="tab-premium" class="fade-in" style="display: none;">
+        <div class="premium-banner">
+            <h3>💎 Premium</h3>
+            <p>Расширенная аналитика</p>
+            <div class="price">500₽ / мес</div>
+            <p style="margin-top: 8px; color: var(--text-secondary);">или 50 ⭐ Stars</p>
+        </div>
+        
+        <div class="card">
+            <ul class="features-list">
+                <li>Интерактивные графики</li>
+                <li>Безлимитное планирование</li>
+                <li>Ежедневные отчеты</li>
+                <li>Экспорт в CSV</li>
+                <li>Приоритетная поддержка</li>
+                <li>Топ пользователей</li>
+            </ul>
+        </div>
+        
+        <button class="btn btn-premium" onclick="buyPremium()">
+            💎 Купить Premium
+        </button>
+        
+        <button class="btn btn-outline" onclick="demoReport()">
+            📊 Демо-отчет
+        </button>
+    </div>
+    
+    <!-- Toast -->
+    <div id="toast" class="toast" style="display: none;"></div>
+    
+    <script>
+        const tg = window.Telegram.WebApp;
+        let currentTab = 'stats';
+        
+        // Инициализация
+        tg.ready();
+        tg.expand();
+        tg.MainButton.hide();
+        
+        function showToast(message, duration = 2000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, duration);
+        }
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Обновляем табы
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Показываем контент
+            document.getElementById('tab-stats').style.display = tab === 'stats' ? 'block' : 'none';
+            document.getElementById('tab-schedule').style.display = tab === 'schedule' ? 'block' : 'none';
+            document.getElementById('tab-premium').style.display = tab === 'premium' ? 'block' : 'none';
+            
+            if (tab === 'stats') refreshStats();
+        }
+        
+        function refreshStats() {
+            // Отправляем данные в бота
+            tg.sendData(JSON.stringify({
+                action: 'get_stats',
+                tab: 'stats'
+            }));
+            
+            showToast('🔄 Обновление...');
+            
+            // Симулируем данные (в реальности получаем от бота)
+            setTimeout(() => {
+                updateStatsUI({
+                    posts: 42,
+                    reactions: 156,
+                    authors: 18,
+                    peakHour: '18'
+                });
+                
+                updateChart([2, 0, 0, 1, 3, 5, 8, 12, 15, 18, 22, 25, 28, 24, 20, 16, 12, 8, 6, 4, 3, 2, 1, 0]);
+                
+                updateReactions([
+                    { emoji: '👍', count: 89 },
+                    { emoji: '❤️', count: 67 },
+                    { emoji: '🔥', count: 45 },
+                    { emoji: '👏', count: 23 },
+                    { emoji: '💯', count: 12 }
+                ]);
+                
+                showToast('✅ Обновлено!');
+            }, 500);
+        }
+        
+        function updateStatsUI(data) {
+            document.getElementById('posts-count').textContent = data.posts;
+            document.getElementById('reactions-count').textContent = data.reactions;
+            document.getElementById('authors-count').textContent = data.authors;
+            document.getElementById('peak-hour').textContent = data.peakHour + ':00';
+        }
+        
+        function updateChart(hourlyData) {
+            const chart = document.getElementById('chart');
+            chart.innerHTML = '';
+            
+            const max = Math.max(...hourlyData, 1);
+            
+            hourlyData.forEach((value, index) => {
+                const height = (value / max) * 100;
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = height + '%';
+                bar.title = `${index}:00 - ${value} постов`;
+                
+                if (index >= 10 && index <= 20) {
+                    bar.style.background = 'linear-gradient(180deg, #3b82f6, #8b5cf6)';
+                }
+                
+                chart.appendChild(bar);
+            });
+        }
+        
+        function updateReactions(reactions) {
+            const card = document.getElementById('reactions-card');
+            const list = document.getElementById('reactions-list');
+            
+            if (reactions.length === 0) {
+                card.style.display = 'none';
+                return;
+            }
+            
+            card.style.display = 'block';
+            list.innerHTML = '';
+            
+            reactions.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'reaction-item';
+                item.innerHTML = `
+                    <span class="reaction-emoji">${r.emoji}</span>
+                    <span class="reaction-count">${r.count}</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        function schedulePost() {
+            tg.sendData(JSON.stringify({
+                action: 'schedule_post'
+            }));
+            showToast('📝 Открываю планировщик...');
+        }
+        
+        function buyPremium() {
+            tg.sendData(JSON.stringify({
+                action: 'buy_premium'
+            }));
+            showToast('💎 Открываю оплату...');
+            
+            // Закрываем Mini App
+            setTimeout(() => {
+                tg.close();
+            }, 1000);
+        }
+        
+        function demoReport() {
+            const demoData = {
+                posts: 35,
+                reactions: 128,
+                authors: 15,
+                peakHour: '18'
+            };
+            
+            updateStatsUI(demoData);
+            updateChart([1, 0, 0, 2, 4, 6, 9, 14, 18, 22, 25, 28, 30, 26, 20, 15, 10, 6, 4, 2, 1, 1, 0, 0]);
+            updateReactions([
+                { emoji: '👍', count: 75 },
+                { emoji: '❤️', count: 53 },
+                { emoji: '🔥', count: 38 }
+            ]);
+            
+            document.getElementById('premium-badge').textContent = 'PREMIUM DEMO';
+            document.getElementById('premium-badge').className = 'badge badge-premium';
+            
+            showToast('📊 Демо-отчет загружен!');
+            
+            // Переключаем на вкладку статистики
+            document.querySelectorAll('.tab')[0].click();
+        }
+        
+        // Обработка данных от бота
+        tg.onEvent('mainButtonClicked', () => {
+            tg.sendData(JSON.stringify({
+                action: 'main_button_clicked',
+                tab: currentTab
+            }));
+        });
+        
+        // Инициализация
+        refreshStats();
+    </script>
+</body>
+</html>
